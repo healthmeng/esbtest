@@ -22,10 +22,19 @@
 
 #include "k5_include.h"
 
+void show_data(const char* start, const char* buf, tU4 len, tI4 ret)
+{
+	int i;
+	printf("%s: %d\tbuf:\n",start,ret);
+	for(i=0;i<len;i++)
+		printf("%02x ",buf[i],buf[i]);
+	printf("\n");	
+}
+
 int main() //主程序
 {
 	tU2 svc         =  0 ;	//服务编码
-	tU4 ret         =  0 ;	//返回码
+	tI4 ret         =  0 ;	//返回码
 	tU4 r_len       =  0 ;	//接收缓冲区长度
 	tU1 r_buf[128]  = {0};	//接收缓冲区
 
@@ -279,11 +288,14 @@ int main() //主程序
 		r_len = strlen(r_buf);
 		//    原语      帧头  服务码  目的  长度    缓冲区
 		ret = k5_call ( &esb, svc,    &to,  r_len,  r_buf );
-		if ( ret <= 0 )  {
-			printf("k5 [%d] unimplemented : ret = [%d]\n", svc, ret);
+		if ( ret < 0 )  {
+			if (ret==-1)
+				printf("k5 [%d] unimplemented : ret = [%d]\n", svc, ret);
+			else
+				printf("k5 [%d] call failed: ret = [%d], check your parameters.\n",svc,ret);
 		} else {
 			printf("k5 [%d] success : ret = [%d]\n", svc, ret);
-			show_data( "return", r_buf, ret );
+			show_data( "return", r_buf, r_len, ret );
 		}
 	} //end of for 
 

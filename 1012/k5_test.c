@@ -35,13 +35,14 @@
 int main ( int argc, char **argv )	//主程序
 {
 	tU2 svc         = 0;	//服务编码
-	tU4 ret         = 0;	//返回码
+	tI4 ret         = 0;	//返回码
 	tU4 r_len       = 0;	//接收缓冲区长度
 	tU1 r_buf[4096] = {0};	//接收缓冲区
-
+	
 	tK5_esb esb;			//ESB帧结构描述
 	tK5_net to;				//网络地址描述
 
+	int i;
 	//----------------------------------------------------
 	// 初始化参数和数据
 	//----------------------------------------------------
@@ -49,6 +50,7 @@ int main ( int argc, char **argv )	//主程序
 	memset ( &to,    0, sizeof(to)    ); //清零网络地址描述
 	memset ( &r_buf, 0, sizeof(r_buf) ); //清零接收缓冲区
 
+	strcpy(r_buf ,"/tmp/data");	//接收缓冲区
 	if ( argc < 2 || argc > 3 )
 	{//提示命令行用法
 		printf("Usage: k5_test serive_code [addr_ipv4] \n" );

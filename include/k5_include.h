@@ -303,10 +303,16 @@ typedef struct {
 #define  file_svc_num     0x0040     //文件File                  15           
 #define  file_create      0x0041     //文件_创建                  1           
 #define  file_delete      0x0042     //文件_删除                  1           
-#define  file_open        0x0243     //文件_打开                  1           
+/*#define  file_open        0x0243     //文件_打开                  1           
 #define  file_close       0x0144     //文件_关闭                  1           
 #define  file_read        0x0445     //文件_读出                  0           
 #define  file_write       0x0446     //文件_写入                  0           
+*/
+
+#define  file_open        0x0043     //文件_打开                  1           
+#define  file_close       0x0044     //文件_关闭                  1           
+#define  file_read        0x0045     //文件_读出                  0           
+#define  file_write       0x0046     //文件_写入                  0           
 #define  file_seek        0x0047     //文件_定位                  0           
 #define  file_rewind      0x0048     //文件_倒回                  0           
 #define  file_state       0x0049     //文件_状态                  0           
@@ -345,7 +351,7 @@ typedef struct {
 #define  grp_get          0x0073     //用户组_获取                0           
 #define  grp_set          0x0074     //用户组_设置                1           
 #define  grp_get_gid      0x0075     //用户组_获取标识            0           
-#define  grp_set_gip      0x0076     //用户组_设置标识            1           
+#define  grp_set_gid      0x0076     //用户组_设置标识            1           
 #define  grp_check        0x0077     //用户组_检查                1           
 
 #define  mem_svc_num      0x0080     //内存Memory                13           
