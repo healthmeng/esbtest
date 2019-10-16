@@ -289,12 +289,12 @@ int main() //主程序
 		//    原语      帧头  服务码  目的  长度    缓冲区
 		ret = k5_call ( &esb, svc,    &to,  r_len,  r_buf );
 		if ( ret < 0 )  {
-			if (ret==-1)
-				printf("k5 [%d] unimplemented : ret = [%d]\n", svc, ret);
+			if (ret==-0xff)
+				printf("k5 [0x%04x] unimplemented : ret = [%d]\n", svc, ret);
 			else
-				printf("k5 [%d] call failed: ret = [%d], check your parameters.\n",svc,ret);
+				printf("k5 [0x%04x] call failed: ret = [%d], check your parameters.\n",svc,ret);
 		} else {
-			printf("k5 [%d] success : ret = [%d]\n", svc, ret);
+			printf("k5 [0x%04x] success : ret = [%d]\n", svc, ret);
 			show_data( "return", r_buf, r_len, ret );
 		}
 	} //end of for 
