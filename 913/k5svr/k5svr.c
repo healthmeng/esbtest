@@ -54,6 +54,19 @@ tI4 do_logout(const char* user){
 }
 
 tI4 do_proc_start(const char* proc){
+/*	struct stat st;
+	if(stat(proc,&st)<0) return -1;
+	if(S_ISDIR(st.st_mode) || st.st_mode & 1==0)
+		return -1;*/
+	if(fork()==0)
+		execlp(proc,proc,NULL);
+	return 0;
+}
+
+tI4 do_proc_stop(const char* proc){
+	char cmd[128];
+	sprintf(cmd,"killall -9 %s 1>/dev/null 2>/dev/null",proc);
+	system(cmd);
 	return 0;
 }
 
@@ -62,41 +75,73 @@ tI4 do_threads(const char* proc){
 	return 0;
 }
 
-tI4 do_state(void *buf){
-	return 0;
-}
-
 tI4 do_rename(const char* buf){
-	return 0;
+	char src[128],dst[128];
+	char cmd[128];
+	sscanf(buf,"%s%s",src,dst);
+	sprintf(cmd,"mv %s %s 1>/dev/null 2>/dev/null",src,dst);
+	return -WEXITSTATUS(system(cmd));
 }
 
 tI4 do_link(const char * buf){
-	return 0;
+	char src[128],dst[128];
+	sscanf(buf,"%s%s",src,dst);
+	return link(src,dst);
 }
 
 tI4 do_set_mode(const char* buf){
+	char file[128];
+	int mode;
+	sscanf(buf,"%s%o",file,&mode);
+	return chmod(file,mode);
+}
+
+tI4 do_get_mode(char *buf){
+	struct stat st;
+	if(stat(buf,&st)<0) return -1;
+	sprintf(buf,"%o",st.st_mode);
 	return 0;
 }
 
 tI4 do_copy(const char* buf){
-	return 0;
+	char src[128],dst[128];
+	char cmd[128];
+	sscanf(buf,"%s%s",src,dst);
+	sprintf(cmd,"/bin/cp %s %s",src,dst);
+	return -WEXITSTATUS(system(cmd));
 }
 
 tI4 do_set_dir_owner(const char* buf){
-	return 0;
+	char dir[128],usr[128];
+	sscanf(buf,"%s%s",dir,usr);
+	struct passwd* pwd=getpwnam(usr);
+	if(pwd){
+		return chown(dir,pwd->pw_uid,-1);
+	}
+	return -1;
 }
 
-tI4 do_dir_set_mode(const char* buf){
-	return 0;
+tI4 do_get_dir_owner(char* dir){
+	uid_t uid;
+	struct stat st;
+	if(stat(dir,&st)==0){
+		struct passwd* pwd=getpwuid(st.st_uid);
+		if(pwd){
+			strcpy(dir,pwd->pw_name);
+			return 0;
+		}
+	}
+	return -1;
 }
 
 tI4 do_get_uid(char* buf){
-		struct passwd* pwd=getpwnam(buf);
+	struct passwd* pwd=getpwnam(buf);
 	if(pwd){
 		sprintf(buf,"%d",pwd->pw_uid);
 		return 0;
 	}else return -1;
 }
+
 
 tI4 do_set_uid(const char* buf)
 {
@@ -195,7 +240,7 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 		ret=do_proc_start(buf);
 		break;
 	case prc_stop:
-		ret=-1;
+		ret=do_proc_stop(buf);
 		break;
 	case prc_fork:
 	case prc_exit:
@@ -204,10 +249,7 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 	case prc_wait:
 		ret=0;
 		break;
-/*	case prc_sync:
-		ret=-0xff;
-		break;
-*/
+	
 	case thr_start:
 	case thr_stop:
 	case thr_exit:
@@ -216,10 +258,8 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 	case thr_wait:
 		ret=do_threads(buf);
 		break;
-/*	case thr_sync:
-		ret=-0xff;
-		break;
-*/
+
+
 	case file_create:
 		ret=creat(buf,0664);
 		break;
@@ -247,12 +287,14 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 		break;
 	case file_state:
 	case file_get_mode:
-		ret=0;
+	case dir_get_mode:
+		ret=do_get_mode(buf);
 		break;
 	case file_seek:
 		ret=lseek(net->dst_port,atol(buf),SEEK_SET);
 		return ret;
 	case file_rename:
+	case dir_rename:
 		ret=do_rename(buf);
 		break;
 	case file_link:
@@ -262,6 +304,7 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 		ret=unlink(buf);
 		break;
 	case file_set_mode:
+	case dir_set_mode:
 		ret=do_set_mode(buf);
 		break;
 	case file_copy:
@@ -282,10 +325,9 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 	case dir_set_owner:
 		ret=do_set_dir_owner(buf);
 		break;
-	case dir_set_mode:
-		ret=do_dir_set_mode(buf);
+	case dir_get_owner:
+		ret=do_get_dir_owner(buf);
 		break;
-
 	case usr_create:
 	case usr_delete:
 	case usr_check:
@@ -317,8 +359,7 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 		ret=do_time_get(buf);
 		break;
 	case time_set:
-		ret=0;
-		//ret=do_time_set(buf);
+		ret=do_time_set(buf);
 		break;	
 	case time_sleep:
 	case time_wait:
@@ -399,8 +440,8 @@ int main(){
 	}
 	while(1){
 		int conn=accept(sockfd,NULL,NULL);
-	//	pthread_t pt;
-	//	pthread_create(&pt,NULL,proc_req,conn+NULL);
+//		pthread_t pt;
+//		pthread_create(&pt,NULL,proc_req,conn+NULL);
 		proc_req(conn+NULL);
 	}
 	return 0;

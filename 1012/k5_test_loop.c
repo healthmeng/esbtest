@@ -26,9 +26,11 @@
 #define YELLOW       "\033[1;33m" 
 #define REST		 "\033[0m"
 
-void show_data(const char* start, const char* buf, tU4 len, tI4 ret)
+void show_data(const char* start, char* buf, tU4 len, tI4 ret)
 {
 	int i;
+	if(buf[len-1]!='\0')
+		buf[len-1]='\0';
 	printf("%s: %d\tbuf:%s\n",start,ret,buf);
 /*	for(i=0;i<len;i++)
 		printf("%c",buf[i]);
@@ -46,6 +48,8 @@ int main() //主程序
 
 	tK5_esb           esb;	//ESB帧结构描述
 	tK5_net            to;	//网络地址描述
+
+	int success=0, error=0, unknown=0;
 
 	//----------------------------------------------------
 	// 初始化参数和数据
@@ -151,7 +155,7 @@ int main() //主程序
 				strcpy(r_buf + strlen(r_buf) , "/tmp/test_f_ln"); // 连接
 				break;
 			case file_unlink:
-				strcpy(r_buf, "/tmp/test_f_unln"); // 连接
+				strcpy(r_buf, "/tmp/test_f_ln"); // 连接
 				break;
 			case file_set_mode:
 				strcpy(r_buf, "/tmp/test_f_setmode"); // 文件名
@@ -164,8 +168,10 @@ int main() //主程序
 				strcpy(r_buf + strlen(r_buf) , "/tmp/test_f_copyed"); // 目标文件名
 				break;
 
-			case dir_make:
 			case dir_remove:
+				strcpy(r_buf,"/tmp/test_del_dir");
+				break;
+			case dir_make:
 			case dir_list:
 			case dir_change:
 			case dir_get_owner:
@@ -243,6 +249,7 @@ int main() //主程序
 			case time_sync:
 				break;
 			case time_set:
+				continue;// to be annotated
 				strcpy(r_buf, "20191018090000"); // 时间
 				break;
 			case time_sleep:
@@ -296,23 +303,26 @@ int main() //主程序
 		ret = k5_call ( &esb, svc,    &to,  r_len,  r_buf );
 		if ( ret < 0 )  {
 			if (ret==-0xff){
+				unknown++;
 				printf(RED);
 				printf("k5 [0x%04x] unimplemented : ret = [%d]\n", svc, ret);
 				printf(REST);
 			}
 			else{
+				error++;
 				printf(YELLOW);
 				printf("k5 [0x%04x] call failed: ret = [%d], please check your parameters.\n",svc,ret);
 				printf(REST);
 			}
 		} else {
+			success++;
 			printf(GREEN);
 			printf("k5 [0x%04x] success : ret = [%d]\n", svc, ret);
 			show_data( "return", r_buf, r_len, ret );
 			printf(REST);
 		}
 	} //end of for 
-
+	printf("\n Results:\n %d successful calls.\n %d calls implemented but failed on incorrect parameters.\n %d unsupported calls.\n",success,error,unknown);
 	printf("\n Thanks to stay with k5_test !  Bye Bye !  \n\n" );
 	return 0;
 }	/* end of main */
