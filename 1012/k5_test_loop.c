@@ -21,21 +21,27 @@
 #include <errno.h>
 
 #include "k5_include.h"
+#define RED          "\033[0;32;31m" 
+#define GREEN        "\033[0;32;32m" 
+#define YELLOW       "\033[1;33m" 
+#define REST		 "\033[0m"
 
 void show_data(const char* start, const char* buf, tU4 len, tI4 ret)
 {
 	int i;
-	printf("%s: %d\tbuf:\n",start,ret);
-	for(i=0;i<len;i++)
-		printf("%02x ",buf[i],buf[i]);
+	printf("%s: %d\tbuf:%s\n",start,ret,buf);
+/*	for(i=0;i<len;i++)
+		printf("%c",buf[i]);
+
 	printf("\n");	
+*/
 }
 
 int main() //主程序
 {
 	tU2 svc         =  0 ;	//服务编码
 	tI4 ret         =  0 ;	//返回码
-	tU4 r_len       =  0 ;	//接收缓冲区长度
+	tU4 r_len       =  128 ;	//接收缓冲区长度
 	tU1 r_buf[128]  = {0};	//接收缓冲区
 
 	tK5_esb           esb;	//ESB帧结构描述
@@ -66,7 +72,7 @@ int main() //主程序
 			case sys_mount_fs:
 				strcpy(r_buf, "/dev/sdb"); // 文件系统
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, " /media/test"); // 挂载点
+				strcpy(r_buf + strlen(r_buf) , " /media/test"); // 挂载点
 				break;
 			case sys_unmount_fs:
 				strcpy(r_buf, "/media/test"); // 挂载点
@@ -107,7 +113,7 @@ int main() //主程序
 			case thr_wait:
 				strcpy(r_buf, "test_proc"); // 进程名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "2"); // 线程号
+				strcpy(r_buf + strlen(r_buf) , "2"); // 线程号
 				break;
 
 			case file_create:
@@ -127,22 +133,22 @@ int main() //主程序
 			case file_write:
 				strcpy(r_buf, "/tmp/test_f_file"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "input content"); // 写入内容
+				strcpy(r_buf + strlen(r_buf) , "input content"); // 写入内容
 				break;
 			case file_seek:
 				strcpy(r_buf, "/tmp/test_f_file"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "5"); // 定位位置
+				strcpy(r_buf + strlen(r_buf) , "5"); // 定位位置
 				break;
 			case file_rename:
 				strcpy(r_buf, "/tmp/test_f_rename_src"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "/tmp/test_f_rename_dst"); // 改名名称
+				strcpy(r_buf + strlen(r_buf) , "/tmp/test_f_rename_dst"); // 改名名称
 				break;
 			case file_link:
 				strcpy(r_buf, "/tmp/test_f_link"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "/tmp/test_f_ln"); // 连接
+				strcpy(r_buf + strlen(r_buf) , "/tmp/test_f_ln"); // 连接
 				break;
 			case file_unlink:
 				strcpy(r_buf, "/tmp/test_f_unln"); // 连接
@@ -150,12 +156,12 @@ int main() //主程序
 			case file_set_mode:
 				strcpy(r_buf, "/tmp/test_f_setmode"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "777"); // 访问模式
+				strcpy(r_buf + strlen(r_buf) , "777"); // 访问模式
 				break;
 			case file_copy:
 				strcpy(r_buf, "/tmp/test_f_copy"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "/tmp/test_f_copyed"); // 目标文件名
+				strcpy(r_buf + strlen(r_buf) , "/tmp/test_f_copyed"); // 目标文件名
 				break;
 
 			case dir_make:
@@ -169,12 +175,12 @@ int main() //主程序
 			case dir_rename:
 				strcpy(r_buf, "/tmp/test_d_rename_src"); // 目录名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "/tmp/test_d_rename_dst"); // 改名名称
+				strcpy(r_buf + strlen(r_buf) , "/tmp/test_d_rename_dst"); // 改名名称
 				break;
 			case dir_link:
 				strcpy(r_buf, "/tmp/test_d_link"); // 目录名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "/tmp/test_d_ln"); // 连接
+				strcpy(r_buf + strlen(r_buf) , "/tmp/test_d_ln"); // 连接
 				break;
 			case dir_unlink:
 				strcpy(r_buf, "/tmp/test_d_unln"); // 连接
@@ -182,12 +188,12 @@ int main() //主程序
 			case dir_set_owner:
 				strcpy(r_buf, "/tmp/test_d_setowner"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "test_dir"); // 拥有者
+				strcpy(r_buf + strlen(r_buf) , "test_dir"); // 拥有者
 				break;
 			case dir_set_mode:
 				strcpy(r_buf, "/tmp/test_d_setmode"); // 文件名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "777"); // 访问模式
+				strcpy(r_buf + strlen(r_buf) , "777"); // 访问模式
 				break;
 
 			case usr_create:
@@ -200,7 +206,7 @@ int main() //主程序
 			case usr_set_uid:
 				strcpy(r_buf, "test_u"); // 用户名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "1102"); // 用户ID
+				strcpy(r_buf + strlen(r_buf) , "1102"); // 用户ID
 				break;
 
 			case grp_create:
@@ -213,7 +219,7 @@ int main() //主程序
 			case grp_set_gid:
 				strcpy(r_buf, "test_g"); // 用户组名
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "32"); // 用户组ID
+				strcpy(r_buf + strlen(r_buf) , "32000"); // 用户组ID
 				break;
 
 			case mem_map:
@@ -272,7 +278,7 @@ int main() //主程序
 			case dev_write:
 				strcpy(r_buf, "/dev/sdb2"); // 设备
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
-				strcpy(r_buf + strlen(r_buf) + 1, "test_v"); // 测试数据
+				strcpy(r_buf + strlen(r_buf) , "test_v"); // 测试数据
 				break;
 			case dev_set:
 				continue; // 如何测？
@@ -285,17 +291,25 @@ int main() //主程序
 				continue; // 暂不执行
 		}
 
-		r_len = strlen(r_buf);
+		//r_len = strlen(r_buf);
 		//    原语      帧头  服务码  目的  长度    缓冲区
 		ret = k5_call ( &esb, svc,    &to,  r_len,  r_buf );
 		if ( ret < 0 )  {
-			if (ret==-0xff)
+			if (ret==-0xff){
+				printf(RED);
 				printf("k5 [0x%04x] unimplemented : ret = [%d]\n", svc, ret);
-			else
-				printf("k5 [0x%04x] call failed: ret = [%d], check your parameters.\n",svc,ret);
+				printf(REST);
+			}
+			else{
+				printf(YELLOW);
+				printf("k5 [0x%04x] call failed: ret = [%d], please check your parameters.\n",svc,ret);
+				printf(REST);
+			}
 		} else {
+			printf(GREEN);
 			printf("k5 [0x%04x] success : ret = [%d]\n", svc, ret);
 			show_data( "return", r_buf, r_len, ret );
+			printf(REST);
 		}
 	} //end of for 
 

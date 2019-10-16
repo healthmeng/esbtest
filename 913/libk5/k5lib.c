@@ -31,9 +31,9 @@ tI4  k5_call (         //5个参数
 		addr.sin_addr.s_addr=to->hn[0].dst_addr;
 	addr.sin_port=htons(PORT);
 	if((sockfd=socket(AF_INET,SOCK_STREAM,0))<0)
-		return -1;
+		return -0xff;
 	if(connect(sockfd,(struct sockaddr*)&addr,sizeof(addr)))
-		return -1;	
+		return -0xff;	
 /*	write(sockfd,esb,sizeof(*esb));
 	write(sockfd,to,sizeof(tK5_net));
 	write(sockfd,&len,sizeof(len));
