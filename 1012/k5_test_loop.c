@@ -36,18 +36,51 @@ char* get_local_ip()
 	return inet_ntoa(*(struct in_addr*)(hent->h_addr_list[0]));
 
 }
-
+/*
 void show_data(const char* start, char* buf, tU4 len, tI4 ret)
 {
 	int i;
 	if(buf[len-1]!='\0')
 		buf[len-1]='\0';
 	printf("%s: %d\tbuf:%s\n",start,ret,buf);
-/*	for(i=0;i<len;i++)
-		printf("%c",buf[i]);
+}*/
 
-	printf("\n");	
-*/
+
+void show_data( const char *title, const char *data, int size )
+{
+	int i = 0;
+	char tmp[9] = {0};
+	char output[3] = {0};
+	char buf[17] = {0};
+
+	printf("@@@@@@@@@@@@  show data of [%s] : start  @@@@@@@@@@@@\n", title);
+	for ( i = 0; i < size; i++ )
+	{
+		if ( i % 16 == 0 )
+		{
+			printf("%04x  ", i);
+			memset(buf, 0, sizeof(buf));
+		}
+		memset(tmp, 0, sizeof(tmp));
+		memset(output, 0, sizeof(output));
+		sprintf(tmp, "%08x", data[i]);
+		strncpy(output, tmp + 6, 2);
+		printf("%s ", output);
+		if ( i % 8 == 7 )
+			printf(" ");
+		buf[i % 16] = ( data[i] >= 0x20 && data[i] <= 0x7e ) ? data[i] : '.';
+		if ( i % 16 == 15 )
+			printf(" %s\n", buf);
+	}
+	if ( size % 16 != 0 )
+	{
+		for ( i = 0; i < 16 - size % 16; i++ )
+			printf("   ");
+		if ( size % 16 < 8 )
+			printf(" ");
+		printf("  %s\n", buf);
+	}
+	printf("@@@@@@@@@@@@  show data of [%s] : end  @@@@@@@@@@@@\n\n", title);
 }
 
 int main(int argc, char** argv) //主程序
@@ -96,7 +129,7 @@ int main(int argc, char** argv) //主程序
 				strcpy(r_buf, "test_vm"); // 虚拟机名
 				break;
 			case sys_mount_fs:
-				strcpy(r_buf, "/dev/sdb"); // 文件系统
+				strcpy(r_buf, "/dev/sda8"); // 文件系统
 				strcpy(r_buf + strlen(r_buf), " "); // 空格间隔
 				strcpy(r_buf + strlen(r_buf) , " /media/test"); // 挂载点
 				break;
@@ -271,7 +304,7 @@ int main(int argc, char** argv) //主程序
 			case time_sync:
 				break;
 			case time_set:
-				continue;// to be annotated
+		//		continue;// to be annotated
 				strcpy(r_buf, "20191018090000"); // 时间
 				break;
 			case time_sleep:
@@ -340,7 +373,7 @@ int main(int argc, char** argv) //主程序
 			success++;
 			printf(GREEN);
 			printf("k5 [0x%04x] success : ret = [%d]\n", svc, ret);
-			show_data( "return", r_buf, r_len, ret );
+			show_data( "return", r_buf, r_len);
 			printf(REST);
 		}
 	} //end of for 
