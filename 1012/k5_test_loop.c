@@ -18,13 +18,24 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <errno.h>
 
 #include "k5_include.h"
 #define RED          "\033[0;32;31m" 
 #define GREEN        "\033[0;32;32m" 
 #define YELLOW       "\033[1;33m" 
 #define REST		 "\033[0m"
+
+char* get_local_ip()
+{
+	char hname[128];
+	struct hostent *hent;
+
+	gethostname(hname, sizeof(hname));
+	hent = gethostbyname(hname);
+
+	return inet_ntoa(*(struct in_addr*)(hent->h_addr_list[0]));
+
+}
 
 void show_data(const char* start, char* buf, tU4 len, tI4 ret)
 {
@@ -39,7 +50,7 @@ void show_data(const char* start, char* buf, tU4 len, tI4 ret)
 */
 }
 
-int main() //主程序
+int main(int argc, char** argv) //主程序
 {
 	tU2 svc         =  0 ;	//服务编码
 	tI4 ret         =  0 ;	//返回码
@@ -59,6 +70,17 @@ int main() //主程序
 	memset ( &r_buf, 0, sizeof(r_buf) ); //清零接收缓冲区
 
 	//处理命令行参数
+   if ( argc ==1 )
+    {
+        to.net_level = 0;
+    } else {
+        to.net_level = 1;              
+        to.hn[0].dst_addr = inet_addr(argv[1]); 
+        to.hn[0].src_addr = inet_addr(get_local_ip());
+        printf( "local ip = [%d], remote ip = [%d]\n", to.hn[0].src_addr, to.hn[0].dst_addr);
+    }
+
+	
 	printf("\n Welcome to k5_test_loop ! let's go !  ...... \n\n" );
 
 	//----------------------------------------------------------
@@ -322,7 +344,7 @@ int main() //主程序
 			printf(REST);
 		}
 	} //end of for 
-	printf("\n Results:\n %d successful calls.\n %d calls implemented but failed on incorrect parameters.\n %d unsupported calls.\n",success,error,unknown);
+	printf("\n Results: total %d calls\n %d successful calls.\n %d calls implemented but failed on incorrect parameters.\n %d unsupported calls.\n",success+error+unknown, success,error,unknown);
 	printf("\n Thanks to stay with k5_test !  Bye Bye !  \n\n" );
 	return 0;
 }	/* end of main */

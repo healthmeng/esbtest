@@ -1,0 +1,17 @@
+[Unit]
+Description=K5 service daemon
+Documentation=man:k5svr(8) 
+After=network.target 
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/k5svr
+#ExecReload=/bin/kill -HUP $MAINPID
+#KillMode=process
+Restart=always
+User=root
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target

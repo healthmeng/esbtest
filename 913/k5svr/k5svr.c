@@ -24,7 +24,8 @@ tI4 do_mount(const char* mnt){
 //	char dev[128],dir[128];
 //	sscanf(mnt,"%s%s",mnt);
 	char cmd[128];
-	sprintf(cmd,"mount %s 1>/dev/null 2>/dev/null",mnt);	
+	sprintf(cmd,"mount %s",mnt);	
+	//sprintf(cmd,"mount %s 1>/dev/null 2>/dev/null",mnt);	
 	return -WEXITSTATUS(system(cmd));
 }
 
@@ -65,7 +66,8 @@ tI4 do_proc_start(const char* proc){
 
 tI4 do_proc_stop(const char* proc){
 	char cmd[128];
-	sprintf(cmd,"killall -9 %s 1>/dev/null 2>/dev/null",proc);
+	sprintf(cmd,"killall -9 %s",proc);
+	//sprintf(cmd,"killall -9 %s 1>/dev/null 2>/dev/null",proc);
 	system(cmd);
 	return 0;
 }
@@ -79,7 +81,8 @@ tI4 do_rename(const char* buf){
 	char src[128],dst[128];
 	char cmd[128];
 	sscanf(buf,"%s%s",src,dst);
-	sprintf(cmd,"mv %s %s 1>/dev/null 2>/dev/null",src,dst);
+	sprintf(cmd,"mv %s %s",src,dst);
+	//sprintf(cmd,"mv %s %s 1>/dev/null 2>/dev/null",src,dst);
 	return -WEXITSTATUS(system(cmd));
 }
 
@@ -149,7 +152,8 @@ tI4 do_set_uid(const char* buf)
 	unsigned int uid;
 	char cmd[1024];
 	sscanf(buf,"%s%d",user,&uid);	
-	sprintf(cmd,"usermod -u %d %s 1>/dev/null 2>/dev/null",uid,user);
+	sprintf(cmd,"usermod -u %d %s",uid,user);
+	//sprintf(cmd,"usermod -u %d %s 1>/dev/null 2>/dev/null",uid,user);
 	return -WEXITSTATUS(system(cmd));
 }
 
@@ -168,7 +172,8 @@ tI4 do_set_gid(const char* buf)
 	unsigned int gid;
 	char cmd[1024];
 	sscanf(buf,"%s%d",grp,&gid);	
-	sprintf(cmd,"groupmod -g %d %s 1>/dev/null 2>/dev/null",gid,grp);
+	sprintf(cmd,"groupmod -g %d %s",gid,grp);
+//	sprintf(cmd,"groupmod -g %d %s 1>/dev/null 2>/dev/null",gid,grp);
 	return -WEXITSTATUS(system(cmd));
 }
 
@@ -199,12 +204,14 @@ tI4 do_time_set(const char* buf)
 }
 
 tI4 do_reboot(){
-	system("reboot 1>/dev/null 2>/dev/null");
+	system("reboot");
+	//system("reboot 1>/dev/null 2>/dev/null");
 	return 0;
 }
 
 tI4 do_halt(){
-	system("poweroff 1>/dev/null 2>/dev/null");
+	system("poweroff");
+	//system("poweroff 1>/dev/null 2>/dev/null");
 	return 0;
 }
 
@@ -419,6 +426,7 @@ void* proc_req(void* param){
 int main(){
 	int sockfd;  
 	int reuse=1;
+//	daemon(1,0);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);  
     if(sockfd < 0)  
     {  
@@ -440,9 +448,9 @@ int main(){
 	}
 	while(1){
 		int conn=accept(sockfd,NULL,NULL);
-//		pthread_t pt;
-//		pthread_create(&pt,NULL,proc_req,conn+NULL);
-		proc_req(conn+NULL);
+		pthread_t pt;
+		pthread_create(&pt,NULL,proc_req,conn+NULL);
+//		proc_req(conn+NULL);
 	}
 	return 0;
 }
