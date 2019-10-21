@@ -25,6 +25,8 @@
 #define YELLOW       "\033[1;33m" 
 #define REST		 "\033[0m"
 
+int trans_c2s(int,char*);
+
 char* get_local_ip()
 {
 	char hname[128];
@@ -36,52 +38,6 @@ char* get_local_ip()
 	return inet_ntoa(*(struct in_addr*)(hent->h_addr_list[0]));
 
 }
-/*
-void show_data(const char* start, char* buf, tU4 len, tI4 ret)
-{
-	int i;
-	if(buf[len-1]!='\0')
-		buf[len-1]='\0';
-	printf("%s: %d\tbuf:%s\n",start,ret,buf);
-}*/
-
-
-void show_data( const char *title, const char *data, int size )
-{
-	int i = 0;
-	char tmp[9] = {0};
-	char output[3] = {0};
-	char buf[17] = {0};
-
-	printf("@@@@@@@@@@@@  show data of [%s] : start  @@@@@@@@@@@@\n", title);
-	for ( i = 0; i < size; i++ )
-	{
-		if ( i % 16 == 0 )
-		{
-			printf("%04x  ", i);
-			memset(buf, 0, sizeof(buf));
-		}
-		memset(tmp, 0, sizeof(tmp));
-		memset(output, 0, sizeof(output));
-		sprintf(tmp, "%08x", data[i]);
-		strncpy(output, tmp + 6, 2);
-		printf("%s ", output);
-		if ( i % 8 == 7 )
-			printf(" ");
-		buf[i % 16] = ( data[i] >= 0x20 && data[i] <= 0x7e ) ? data[i] : '.';
-		if ( i % 16 == 15 )
-			printf(" %s\n", buf);
-	}
-	if ( size % 16 != 0 )
-	{
-		for ( i = 0; i < 16 - size % 16; i++ )
-			printf("   ");
-		if ( size % 16 < 8 )
-			printf(" ");
-		printf("  %s\n", buf);
-	}
-	printf("@@@@@@@@@@@@  show data of [%s] : end  @@@@@@@@@@@@\n\n", title);
-}
 
 int main(int argc, char** argv) //主程序
 {
@@ -90,6 +46,7 @@ int main(int argc, char** argv) //主程序
 	tU4 r_len       =  128 ;	//接收缓冲区长度
 	tU1 r_buf[128]  = {0};	//接收缓冲区
 
+	char svcname[100];
 	tK5_esb           esb;	//ESB帧结构描述
 	tK5_net            to;	//网络地址描述
 
@@ -356,28 +313,29 @@ int main(int argc, char** argv) //主程序
 		//r_len = strlen(r_buf);
 		//    原语      帧头  服务码  目的  长度    缓冲区
 		ret = k5_call ( &esb, svc,    &to,  r_len,  r_buf );
-		if ( ret < 0 )  {
-			if (ret==-0xff){
+		trans_c2s(svc,svcname);
+		if ( ret <= 0 )  {
+			/*if (ret==-0xff)*/{
 				unknown++;
 				printf(RED);
-				printf("k5 [0x%04x] unimplemented : ret = [%d]\n", svc, ret);
+				printf("k5 [0x%04x](%s) failed : ret = [%d]\n", svc, svcname ,ret);
 				printf(REST);
 			}
-			else{
+/*		else{
 				error++;
 				printf(YELLOW);
 				printf("k5 [0x%04x] call failed: ret = [%d], please check your parameters.\n",svc,ret);
 				printf(REST);
-			}
+			}*/
 		} else {
 			success++;
 			printf(GREEN);
-			printf("k5 [0x%04x] success : ret = [%d]\n", svc, ret);
+			printf("k5 [0x%04x](%s) success : ret = [%d]\n", svc,svcname, ret);
 			show_data( "return", r_buf, r_len);
 			printf(REST);
 		}
 	} //end of for 
-	printf("\n Results: total %d calls\n %d successful calls.\n %d calls implemented but failed on incorrect parameters.\n %d unsupported calls.\n",success+error+unknown, success,error,unknown);
+	printf("\n Results: total %d calls\n %d successful calls.\n %d calls failed \n ",success+error+unknown, success,unknown);
 	printf("\n Thanks to stay with k5_test !  Bye Bye !  \n\n" );
 	return 0;
 }	/* end of main */

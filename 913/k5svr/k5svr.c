@@ -21,9 +21,9 @@
 
 
 tI4 do_mount(const char* mnt){
-//	char dev[128],dir[128];
+//	char dev[1024],dir[1024];
 //	sscanf(mnt,"%s%s",mnt);
-	char cmd[128];
+	char cmd[1024];
 	sprintf(cmd,"mount %s",mnt);	
 	//sprintf(cmd,"mount %s 1>/dev/null 2>/dev/null",mnt);	
 	return -WEXITSTATUS(system(cmd));
@@ -34,7 +34,7 @@ tI4 do_umount(const char* mnt){
 }
 
 tI4 do_login(const char* user_psd){
-	char usr[128],pwd[128];
+	char usr[1024],pwd[1024];
     struct spwd *sp;
 	sscanf(user_psd,"%s%s",usr,pwd);
 	sp=getspnam(usr);
@@ -65,7 +65,7 @@ tI4 do_proc_start(const char* proc){
 }
 
 tI4 do_proc_stop(const char* proc){
-	char cmd[128];
+	char cmd[1024];
 	sprintf(cmd,"killall -9 %s",proc);
 	//sprintf(cmd,"killall -9 %s 1>/dev/null 2>/dev/null",proc);
 	system(cmd);
@@ -78,8 +78,8 @@ tI4 do_threads(const char* proc){
 }
 
 tI4 do_rename(const char* buf){
-	char src[128],dst[128];
-	char cmd[128];
+	char src[1024],dst[1024];
+	char cmd[1024];
 	sscanf(buf,"%s%s",src,dst);
 	sprintf(cmd,"mv %s %s",src,dst);
 	//sprintf(cmd,"mv %s %s 1>/dev/null 2>/dev/null",src,dst);
@@ -87,13 +87,13 @@ tI4 do_rename(const char* buf){
 }
 
 tI4 do_link(const char * buf){
-	char src[128],dst[128];
+	char src[1024],dst[1024];
 	sscanf(buf,"%s%s",src,dst);
 	return link(src,dst);
 }
 
 tI4 do_set_mode(const char* buf){
-	char file[128];
+	char file[1024];
 	int mode;
 	sscanf(buf,"%s%o",file,&mode);
 	return chmod(file,mode);
@@ -107,15 +107,15 @@ tI4 do_get_mode(char *buf){
 }
 
 tI4 do_copy(const char* buf){
-	char src[128],dst[128];
-	char cmd[128];
+	char src[1024],dst[1024];
+	char cmd[1024];
 	sscanf(buf,"%s%s",src,dst);
 	sprintf(cmd,"/bin/cp %s %s",src,dst);
 	return -WEXITSTATUS(system(cmd));
 }
 
 tI4 do_set_dir_owner(const char* buf){
-	char dir[128],usr[128];
+	char dir[1024],usr[1024];
 	sscanf(buf,"%s%s",dir,usr);
 	struct passwd* pwd=getpwnam(usr);
 	if(pwd){
@@ -148,7 +148,7 @@ tI4 do_get_uid(char* buf){
 
 tI4 do_set_uid(const char* buf)
 {
-	char user[128];
+	char user[1024];
 	unsigned int uid;
 	char cmd[1024];
 	sscanf(buf,"%s%d",user,&uid);	
@@ -168,7 +168,7 @@ tI4 do_get_gid(char* buf)
 
 tI4 do_set_gid(const char* buf)
 {
-	char grp[128];
+	char grp[1024];
 	unsigned int gid;
 	char cmd[1024];
 	sscanf(buf,"%s%d",grp,&gid);	
@@ -215,7 +215,7 @@ tI4 do_halt(){
 	return 0;
 }
 
-tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
+tU4 do_serve(tK5_esb* head, /*tK5_net *net,*/ tU4* len, tU1* buf){
 	tI4 ret= 0;
 	switch (head->service){
 /*	case sys_start_vmm:
@@ -274,23 +274,23 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 		ret=unlink(buf);
 		break;
 	case file_open:
-		buf[*len]='\0';
+//		buf[*len]='\0';
 		ret=open(buf,O_RDWR);
 		break;
 	case file_read:
-		if(net->dst_port>2)
-		ret=read(net->dst_port,buf,*len);
+		if(head->dst_port>2)
+		ret=read(head->dst_port,buf,*len);
 		break;
 	case file_write:
-		if(net->dst_port>2)
-		ret=write(net->dst_port,buf,*len);
+		if(head->dst_port>2)
+		ret=write(head->dst_port,buf,*len);
 		break;
 	case file_close:
-		if(net->dst_port>2)
-			ret=close(net->dst_port);
+		if(head->dst_port>2)
+			ret=close(head->dst_port);
 		break;
 	case file_rewind:
-		ret=lseek(net->dst_port,0,SEEK_SET);
+		ret=lseek(head->dst_port,0,SEEK_SET);
 		break;
 	case file_state:
 	case file_get_mode:
@@ -298,7 +298,7 @@ tU4 do_serve(tK5_esb* head, tK5_net *net, tU4* len, tU1* buf){
 		ret=do_get_mode(buf);
 		break;
 	case file_seek:
-		ret=lseek(net->dst_port,atol(buf),SEEK_SET);
+		ret=lseek(head->dst_port,atol(buf),SEEK_SET);
 		return ret;
 	case file_rename:
 	case dir_rename:
@@ -401,26 +401,28 @@ ssize_t do_read(int fd, void* buf, ssize_t len){
 void* proc_req(void* param){
 	int sockfd=param-NULL;
 	tU4 len;
-	tK5_net net;
-	tU1* buf=NULL;
+//	tK5_net net;
+	//tU1* buf=NULL;
 	tK5_esb esb;
 	tU4 ret=-1;
+	char buf[8192];
 	if(do_read(sockfd,&esb,sizeof(esb))==sizeof(esb) &&
-		do_read(sockfd,&net,sizeof(net))==sizeof(net) &&
+//		do_read(sockfd,&net,sizeof(net))==sizeof(net) &&
 		do_read(sockfd,&len,sizeof(len))==sizeof(len)){
-		buf=(tU1*)calloc(1,len);
+//		buf=(tU1*)calloc(1,len);
 		if(len>0)
 			do_read(sockfd,buf,len);
-		ret=do_serve(&esb,&net,&len,buf);
+		ret=do_serve(&esb,&len,buf);
 	}
 	write(sockfd,&esb,sizeof(esb));
 	write(sockfd,&ret,sizeof(ret));
+	len=strlen(buf);
 	write(sockfd,&len,sizeof(len));
 	if(len>0)
 		write(sockfd,buf,len);
 	close(sockfd);
-	if(buf)
-		free(buf);
+//	if(buf)
+//		free(buf);
 }
 
 int main(){
@@ -448,9 +450,9 @@ int main(){
 	}
 	while(1){
 		int conn=accept(sockfd,NULL,NULL);
-		pthread_t pt;
-		pthread_create(&pt,NULL,proc_req,conn+NULL);
-//		proc_req(conn+NULL);
+	//	pthread_t pt;
+	//	pthread_create(&pt,NULL,proc_req,conn+NULL);
+		proc_req(conn+NULL);
 	}
 	return 0;
 }

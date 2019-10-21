@@ -9,14 +9,15 @@
 // 修改： 辛耀中，2018-09-08， 进一步简化ESB协议为一维8字节数组。
 //
 ///////////////////////////////////////////////////////////////////////////
-
+#ifndef _K5_INCLUDE_H
+#define _K5_INCLUDE_H
 //-----------------------------------------------------------------
 // 事件服务总线基础常数定义
 //-----------------------------------------------------------------
 
 //常用数据类型定义；
-typedef            char    tI1;   //有符号1字节整型数 
-typedef  unsigned   char    tU1;	    //无符号1字节整型数 
+typedef            char    tI1;   //有符号1字节整型数
+typedef  unsigned  char    tU1;	  //无符号1字节整型数
 typedef            short   tI2;   //有符号2字节整型数
 typedef  unsigned  short   tU2;   //无符号2字节整型数
 typedef            int     tI4;   //有符号4字节整型数
@@ -24,7 +25,7 @@ typedef  unsigned  int     tU4;   //无符号4字节整型数
 typedef            long    tI8;   //有符号8字节整型数
 typedef  unsigned  long    tU8;   //无符号8字节整型数
 typedef            float   tF4;   //4字节浮点数
-typedef  double     tF8;   //8字节浮点数
+typedef  double            tF8;   //8字节浮点数
 
 //事件服务总线帧头类型定义（3比特）；2018-09-05
 #define   K5_H0  0   //0型帧，基本头部8字节；
@@ -116,7 +117,7 @@ typedef struct {
 //-----------------------------------------------------------------
 
 //事件服务总线网络地址描述 net, 2018-09-06
-typedef struct {        
+typedef struct {
   tU2      net_level;     //网络级数，从第1级本处理器，到第7级
   tU2       name_len;     //网络名称字符串总长度
   tU2       dst_port;     //目的端口号（pid,fd,sock）
@@ -180,7 +181,7 @@ typedef struct {
 //注2：将原来的两个异步原语换为意义更为明确的异步确认和异步否认，主要是为了
 //     配合零拷贝技术，需要尽快确认以便释放送端缓冲区，也使接收端继续等待。
 //注3：该服务原语有两种用法，一是供新开发的应用程序直接调用，二是由新CLIB
-//       中POSIX系统服务函数间接调用，原应用程序不需修改，但不支持K5新功能。
+//     中POSIX系统服务函数间接调用，原应用程序不需修改，但不支持K5新功能。
 //注4  为四原语设置两个通用参数（一个整型、一串型），便于原语组装ESB帧，
 //     若还需传递其他参数，可直接通过ESB数据结构传递。 2018-09-05增加的
 //     各个系统服务的特定参数结构不再需要了，使用更为方便。2018-09-06.
@@ -206,39 +207,38 @@ typedef struct {
 //-------------------------------------------------------------------------
 
 // 同步调用请求原语（原SS），一直等待对方应答后，才释放发送缓冲区
-tI4  k5_call (         //5个参数     
+tU4  k5_call (         //5个参数
      tK5_esb   *esb,   //ESB总线数据结构（改为第1个参数）
      tU2    service,   //服务编码
-     tK5_net    *to,   //目的端口号（pid,fd,sock）及网络地址  
+     tK5_net    *to,   //目的端口号（pid,fd,sock）及网络地址
      tU4      p_int,   //该服务的第一个整型参数，4字节；
      tU1     *p_str    //该服务的串型参数，参数之间用空格分隔；
-); 
+);
 
-//同步等待接收原语（原RS)，等待接收服务请求或服务确认;
-tI4  k5_wait  (       //4个参数，不需要等待特定服务编码 ；   
+//同步等待接收原语（原RS)，等待接收服务请求或服务确认；
+tU4  k5_wait  (       //4个参数，不需要等待特定服务编码 ；
      tK5_esb   *esb,  //ESB总线帧数据结构（改为第1个参数）
-     tK5_net  *from,  //期望等待的端口及网址，NULL为ANY 
+     tK5_net  *from,  //期望等待的端口及网址，NULL为ANY
      tU4     *r_len,  //接收缓冲区长度，按8字节计，含帧头；
      tU1     *r_buf   //接收缓冲区地址，使用零拷贝时不用；
-); 
+);
 
-//异步应答原语（原SA，ack+nak)，确认服务请求，返回服务结果，然后继续等待;
-tI4  k5_reply  (     //4个参数，原路返回，不需要地址；
+//异步应答原语（原SA，ack+nak)，确认服务请求，返回服务结果，然后继续等待；
+tU4  k5_reply  (     //4个参数，原路返回，不需要地址；
      tK5_esb  *esb,  //ESB总线帧数据结构（改为第1个参数）
      tI2   ack_err,  //正值时为确认序列号，负值表示错误编号；
      tU4     s_len,  //发送缓冲区长度,按8字节计，含帧头；
      tU1    *s_buf   //发送缓冲区地址,带服务结果数据；
-); 
+);
 
-
-//异步发送原语（原SA)，主动发送数据或通知，然后继续等待;
-tI4  k5_send  (      //5个参数; 取消nak原语后，恢复异步发送原语send;
+//异步发送原语（原SA)，主动发送数据或通知，然后继续等待；
+tU4  k5_send  (      //5个参数; 取消nak原语后，恢复异步发送原语send；
      tK5_esb   *esb, //ESB总线帧数据结构（改为第1个参数）
      tU2    service, //服务编码
-     tK5_net    *to, //目的端口号（pid,fd,sock）及网络地址  
+     tK5_net    *to, //目的端口号（pid,fd,sock）及网络地址
      tU4      s_len, //发送缓冲区长度,按8字节计，含帧头；
      tU1     *s_buf  //发送缓冲区地址,主动发送的数据或订阅的数据；
-); 
+);
 
 
 //-------------------------------------------------------------------------
@@ -246,160 +246,160 @@ tI4  k5_send  (      //5个参数; 取消nak原语后，恢复异步发送原语
 //-------------------------------------------------------------------------
 
 //服务组进程向量表,用于从服务组号SGID查找服务进程PID，以便快速切换；
-typedef struct {          
-    tU1   sgid;        //服务组标识;
-    tU1   snum;        //组内服务数;
+typedef struct {
+    tU1   sgid;        //服务组标识；
+    tU1   snum;        //组内服务数；
     tU2   offset;      //服务组在事件服务向量表中的偏移量；
-    tU2   uid;         //该服务组的拥有者用户标识UID;
+    tU2   uid;         //该服务组的拥有者用户标识UID；
     tU2   priv;        //该服务组的访问权限；
-    tU2   state;       //该组服务进程运行状态;
+    tU2   state;       //该组服务进程运行状态；
     tU2   pid;         //提供服务的进程或线程的标识PID；
 }   tK5_ServiceGroup;  //服务组进程向量表。
 
 //服务访问控制表,用于从服务号SID查找，以便切换的服务进程；
-typedef struct {          
-    tU1   sgid;        //服务组标识;
-    tU1   sfid;        //组内服务功能标识;
+typedef struct {
+    tU1   sgid;        //服务组标识；
+    tU1   sfid;        //组内服务功能标识；
     tU2   control;     //服务核查控制方式；
 }   tK5_ServiceControl;//服务访问控制向量表。
 
 
 //服务向量配置表
 //< K5_OS_Service  group=11    service=110    max_service=256    >
-#define  sys_svc_num      0x0010     //系统System                13           
-#define  sys_reboot       0x0011     //系统_重启                  1           
-#define  sys_halt         0x0012     //系统_停机                  1           
-#define  sys_start_vmm    0x0013     //系统_启动虚拟机            1           
-#define  sys_stop_vmm     0x0014     //系统_停止虚拟机            1           
-#define  sys_mount_fs     0x0015     //系统_安装文件系统          1           
-#define  sys_unmount_fs   0x0016     //系统_卸载文件系统          1           
-#define  sys_login        0x0017     //系统_登录系统              1           
-#define  sys_logout       0x0018     //系统_退出系统              1           
-#define  sys_svc_grp_reg  0x0019     //系统_注册服务组            1           
-#define  sys_svc_grp_del  0x001a     //系统_删除服务组            1           
-#define  sys_svc_reg      0x001b     //系统_注册服务              1           
-#define  sys_svc_del      0x001c     //系统_删除服务              1           
-#define  sys_svc_list     0x001d     //系统_服务列表              0           
+#define  sys_svc_num      0x0010     //系统System                13
+#define  sys_reboot       0x0011     //系统_重启                  1
+#define  sys_halt         0x0012     //系统_停机                  1
+#define  sys_start_vmm    0x0013     //系统_启动虚拟机            1
+#define  sys_stop_vmm     0x0014     //系统_停止虚拟机            1
+#define  sys_mount_fs     0x0015     //系统_安装文件系统          1
+#define  sys_unmount_fs   0x0016     //系统_卸载文件系统          1
+#define  sys_login        0x0017     //系统_登录系统              1
+#define  sys_logout       0x0018     //系统_退出系统              1
+#define  sys_svc_grp_reg  0x0019     //系统_注册服务组            1
+#define  sys_svc_grp_del  0x001a     //系统_删除服务组            1
+#define  sys_svc_reg      0x001b     //系统_注册服务              1
+#define  sys_svc_del      0x001c     //系统_删除服务              1
+#define  sys_svc_list     0x001d     //系统_服务列表              0
 
-#define  prc_svc_num      0x0020     //进程Process                8           
-#define  prc_start        0x0021     //进程_启动                  1           
-#define  prc_stop         0x0022     //进程_停止                  1           
-#define  prc_fork         0x0023     //进程_分叉                  1           
-#define  prc_exit         0x0024     //进程_退出                  1           
-#define  prc_pause        0x0025     //进程_暂停                  1           
-#define  prc_resume       0x0026     //进程_继续                  1           
-#define  prc_sync         0x0027     //进程_同步                  1           
-#define  prc_wait         0x0028     //进程_等待                  1           
+#define  prc_svc_num      0x0020     //进程Process                8
+#define  prc_start        0x0021     //进程_启动                  1
+#define  prc_stop         0x0022     //进程_停止                  1
+#define  prc_fork         0x0023     //进程_分叉                  1
+#define  prc_exit         0x0024     //进程_退出                  1
+#define  prc_pause        0x0025     //进程_暂停                  1
+#define  prc_resume       0x0026     //进程_继续                  1
+#define  prc_sync         0x0027     //进程_同步                  1
+#define  prc_wait         0x0028     //进程_等待                  1
 
-#define  thr_svc_num      0x0030     //线程Thread                 7           
-#define  thr_start        0x0031     //线程_启动                  1           
-#define  thr_stop         0x0032     //线程_停止                  1           
-#define  thr_exit         0x0033     //线程_退出                  1           
-#define  thr_pause        0x0034     //线程_暂停                  1           
-#define  thr_resume       0x0035     //线程_继续                  1           
-#define  thr_sync         0x0036     //线程_同步                  1           
-#define  thr_wait         0x0037     //线程_等待                  1           
+#define  thr_svc_num      0x0030     //线程Thread                 7
+#define  thr_start        0x0031     //线程_启动                  1
+#define  thr_stop         0x0032     //线程_停止                  1
+#define  thr_exit         0x0033     //线程_退出                  1
+#define  thr_pause        0x0034     //线程_暂停                  1
+#define  thr_resume       0x0035     //线程_继续                  1
+#define  thr_sync         0x0036     //线程_同步                  1
+#define  thr_wait         0x0037     //线程_等待                  1
 
-#define  file_svc_num     0x0040     //文件File                  15           
-#define  file_create      0x0041     //文件_创建                  1           
-#define  file_delete      0x0042     //文件_删除                  1           
-#define  file_open        0x0043     //文件_打开                  1           
-#define  file_close       0x0044     //文件_关闭                  1           
-#define  file_read        0x0045     //文件_读出                  0           
-#define  file_write       0x0046     //文件_写入                  0           
-#define  file_seek        0x0047     //文件_定位                  0           
-#define  file_rewind      0x0048     //文件_倒回                  0           
-#define  file_state       0x0049     //文件_状态                  0           
-#define  file_rename      0x004a     //文件_改名                  0           
-#define  file_link        0x004b     //文件_连接                  1           
-#define  file_unlink      0x004c     //文件_解连                  1           
-#define  file_set_mode    0x004d     //文件_设置访问模式          1           
-#define  file_get_mode    0x004e     //文件_获取访问模式          0           
-#define  file_copy        0x004f     //文件_拷贝，还有另存为、移动等 
+#define  file_svc_num     0x0040     //文件File                  15
+#define  file_create      0x0041     //文件_创建                  1
+#define  file_delete      0x0042     //文件_删除                  1
+#define  file_open        0x0043     //文件_打开                  1
+#define  file_close       0x0044     //文件_关闭                  1
+#define  file_read        0x0045     //文件_读出                  0
+#define  file_write       0x0046     //文件_写入                  0
+#define  file_seek        0x0047     //文件_定位                  0
+#define  file_rewind      0x0048     //文件_倒回                  0
+#define  file_state       0x0049     //文件_状态                  0
+#define  file_rename      0x004a     //文件_改名                  0
+#define  file_link        0x004b     //文件_连接                  1
+#define  file_unlink      0x004c     //文件_解连                  1
+#define  file_set_mode    0x004d     //文件_设置访问模式          1
+#define  file_get_mode    0x004e     //文件_获取访问模式          0
+#define  file_copy        0x004f     //文件_拷贝，还有另存为、移动等
 
-#define  dir_svc_num      0x0050     //目录Director              11           
-#define  dir_make         0x0051     //目录_创建                  1           
-#define  dir_remove       0x0052     //目录_删除                  1           
-#define  dir_list         0x0053     //目录_列表                  0           
-#define  dir_change       0x0054     //目录_切换                  0           
-#define  dir_rename       0x0055     //目录_改名                  1           
-#define  dir_link         0x0056     //目录_连接                  1           
-#define  dir_unlink       0x0057     //目录_解连                  1           
-#define  dir_set_owner    0x0058     //目录_设置拥有者            1           
-#define  dir_get_owner    0x0059     //目录_获取拥有者            0           
-#define  dir_set_mode     0x005a     //目录_设置访问模式          1           
-#define  dir_get_mode     0x005b     //目录_获取访问模式          0           
+#define  dir_svc_num      0x0050     //目录Director              11
+#define  dir_make         0x0051     //目录_创建                  1
+#define  dir_remove       0x0052     //目录_删除                  1
+#define  dir_list         0x0053     //目录_列表                  0
+#define  dir_change       0x0054     //目录_切换                  0
+#define  dir_rename       0x0055     //目录_改名                  1
+#define  dir_link         0x0056     //目录_连接                  1
+#define  dir_unlink       0x0057     //目录_解连                  1
+#define  dir_set_owner    0x0058     //目录_设置拥有者            1
+#define  dir_get_owner    0x0059     //目录_获取拥有者            0
+#define  dir_set_mode     0x005a     //目录_设置访问模式          1
+#define  dir_get_mode     0x005b     //目录_获取访问模式          0
 
-#define  usr_svc_num      0x0060     //用户User                   7           
-#define  usr_create       0x0061     //用户_创建                  1           
-#define  usr_delete       0x0062     //用户_删除                  1           
-#define  usr_get          0x0063     //用户_获取                  1           
-#define  usr_set          0x0064     //用户_设置                  1           
-#define  usr_get_uid      0x0065     //用户_获取标识              0           
-#define  usr_set_uid      0x0066     //用户_设置标识              1           
-#define  usr_check        0x0067     //用户_检查                  1           
+#define  usr_svc_num      0x0060     //用户User                   7
+#define  usr_create       0x0061     //用户_创建                  1
+#define  usr_delete       0x0062     //用户_删除                  1
+#define  usr_get          0x0063     //用户_获取                  1
+#define  usr_set          0x0064     //用户_设置                  1
+#define  usr_get_uid      0x0065     //用户_获取标识              0
+#define  usr_set_uid      0x0066     //用户_设置标识              1
+#define  usr_check        0x0067     //用户_检查                  1
 
-#define  grp_svc_num      0x0070     //用户组Group                7           
-#define  grp_create       0x0071     //用户组_创建                1           
-#define  grp_delete       0x0072     //用户组_删除                1           
-#define  grp_get          0x0073     //用户组_获取                0           
-#define  grp_set          0x0074     //用户组_设置                1           
-#define  grp_get_gid      0x0075     //用户组_获取标识            0           
-#define  grp_set_gid      0x0076     //用户组_设置标识            1           
-#define  grp_check        0x0077     //用户组_检查                1           
+#define  grp_svc_num      0x0070     //用户组Group                7
+#define  grp_create       0x0071     //用户组_创建                1
+#define  grp_delete       0x0072     //用户组_删除                1
+#define  grp_get          0x0073     //用户组_获取                0
+#define  grp_set          0x0074     //用户组_设置                1
+#define  grp_get_gid      0x0075     //用户组_获取标识            0
+#define  grp_set_gid      0x0076     //用户组_设置标识            1
+#define  grp_check        0x0077     //用户组_检查                1
 
-#define  mem_svc_num      0x0080     //内存Memory                13           
-#define  mem_map          0x0081     //内存_映射                  1           
-#define  mem_unmap        0x0082     //内存_解除映射              1           
-#define  mem_alloc        0x0083     //内存_申请                  0           
-#define  mem_free         0x0084     //内存_释放                  0           
-#define  mem_share        0x0085     //内存_共享                  1           
-#define  mem_unshare      0x0086     //内存_解除共享              1           
-#define  mem_lock         0x0087     //内存_锁定                  0           
-#define  mem_unlock       0x0088     //内存_解除锁定              0           
-#define  mem_sem_get      0x0089     //内存_获取信号灯            0           
-#define  mem_sem_set      0x008a     //内存_设置信号灯            1           
-#define  mem_sem_on       0x008b     //内存_开启信号灯            0           
-#define  mem_sem_off      0x008c     //内存_关闭信号灯            0           
-#define  mem_control      0x008d     //内存_控制                  1           
+#define  mem_svc_num      0x0080     //内存Memory                13
+#define  mem_map          0x0081     //内存_映射                  1
+#define  mem_unmap        0x0082     //内存_解除映射              1
+#define  mem_alloc        0x0083     //内存_申请                  0
+#define  mem_free         0x0084     //内存_释放                  0
+#define  mem_share        0x0085     //内存_共享                  1
+#define  mem_unshare      0x0086     //内存_解除共享              1
+#define  mem_lock         0x0087     //内存_锁定                  0
+#define  mem_unlock       0x0088     //内存_解除锁定              0
+#define  mem_sem_get      0x0089     //内存_获取信号灯            0
+#define  mem_sem_set      0x008a     //内存_设置信号灯            1
+#define  mem_sem_on       0x008b     //内存_开启信号灯            0
+#define  mem_sem_off      0x008c     //内存_关闭信号灯            0
+#define  mem_control      0x008d     //内存_控制                  1
 
-#define  time_svc_num     0x0090     //时间Time                   6           
-#define  time_get         0x0091     //时间_获取                  0            
-#define  time_set         0x0092     //时间_设置                  0           
-#define  time_sleep       0x0093     //时间_休眠                  0           
-#define  time_wait        0x0094     //时间_等待                  0           
-#define  time_alarm       0x0096     //时间_设置告警              0           
-#define  time_clear       0x0097     //时间_清除告警              0           
-#define  time_sync        0x0098     //时间_对时同步              1           
+#define  time_svc_num     0x0090     //时间Time                   6
+#define  time_get         0x0091     //时间_获取                  0
+#define  time_set         0x0092     //时间_设置                  0
+#define  time_sleep       0x0093     //时间_休眠                  0
+#define  time_wait        0x0094     //时间_等待                  0
+#define  time_alarm       0x0096     //时间_设置告警              0
+#define  time_clear       0x0097     //时间_清除告警              0
+#define  time_sync        0x0098     //时间_对时同步              1
 
-#define  net_svc_num      0x00a0     //网络Network               11           
-#define  net_socket       0x00a1     //网络_打开套接              1           
-#define  net_close        0x00a2     //网络_关闭套接              1           
-#define  net_bind         0x00a3     //网络_绑定                  0           
-#define  net_control      0x00a4     //网络_控制                  1           
-#define  net_connect      0x00a5     //网络_请求联接              1           
-#define  net_accept       0x00a6     //网络_接受联接              1           
-#define  net_send         0x00a7     //网络_发送                  0           
-#define  net_recv         0x00a8     //网络_接收                  0           
-#define  net_send_to      0x00a9     //网络_发送到                0           
-#define  net_recv_from    0x00aa     //网络_接收自                0           
-#define  net_select       0x0ab     //网络_选择                  0           
+#define  net_svc_num      0x00a0     //网络Network               11
+#define  net_socket       0x00a1     //网络_打开套接              1
+#define  net_close        0x00a2     //网络_关闭套接              1
+#define  net_bind         0x00a3     //网络_绑定                  0
+#define  net_control      0x00a4     //网络_控制                  1
+#define  net_connect      0x00a5     //网络_请求联接              1
+#define  net_accept       0x00a6     //网络_接受联接              1
+#define  net_send         0x00a7     //网络_发送                  0
+#define  net_recv         0x00a8     //网络_接收                  0
+#define  net_send_to      0x00a9     //网络_发送到                0
+#define  net_recv_from    0x00aa     //网络_接收自                0
+#define  net_select       0x00ab     //网络_选择                  0
 
-#define  dev_svc_num      0x00b0     //设备Device                12           
-#define  dev_start        0x00b1     //设备_启动                  1           
-#define  dev_stop         0x00b2     //设备_停止                  1           
-#define  dev_open         0x00b3     //设备_打开                  1           
-#define  dev_close        0x00b4     //设备_关闭                  1           
-#define  dev_read         0x00b5     //设备_读出                  0           
-#define  dev_write        0x00b6     //设备_写入                  0           
-#define  dev_state        0x00b7     //设备_状态                  0           
-#define  dev_control      0x00b8     //设备_控制                  1           
-#define  dev_reset        0x00b9     //设备_复位                  1           
-#define  dev_sleep        0x00ba     //设备_休眠                  0           
-#define  dev_set          0x00bb     //设备_设置参数              1           
-#define  dev_get          0x00bc     //设备_获得参数              0           
+#define  dev_svc_num      0x00b0     //设备Device                12
+#define  dev_start        0x00b1     //设备_启动                  1
+#define  dev_stop         0x00b2     //设备_停止                  1
+#define  dev_open         0x00b3     //设备_打开                  1
+#define  dev_close        0x00b4     //设备_关闭                  1
+#define  dev_read         0x00b5     //设备_读出                  0
+#define  dev_write        0x00b6     //设备_写入                  0
+#define  dev_state        0x00b7     //设备_状态                  0
+#define  dev_control      0x00b8     //设备_控制                  1
+#define  dev_reset        0x00b9     //设备_复位                  1
+#define  dev_sleep        0x00ba     //设备_休眠                  0
+#define  dev_set          0x00bb     //设备_设置参数              1
+#define  dev_get          0x00bc     //设备_获得参数              0
 
-#define  K5_MAX_SVC       0x00bc+1   //最大服务编码  
+#define  K5_MAX_SVC       0x00bc+1   //最大服务编码
 
 //待增加常用设备服务，如打印机、显示器、键盘、鼠标、硬盘、U盘、照相机
 //以太网、WiFi、无线通信、4G/5G等。
@@ -409,7 +409,7 @@ typedef struct {
 //-------------------------------------------------------------------------
 
 //主体功能权能描述：32比特；2018-06-24
-typedef struct {          
+typedef struct {
     tU4  system:1;     //0：系统服务，需要特权认证;
     tU4  process:1;    //1：进程服务，需要特权认证;
     tU4  thread:1;     //2：线程服务，需要特权认证;
@@ -433,7 +433,7 @@ typedef struct {
 }  tK5_Capibility;     //主体分类权能。
 
 //客体访问权能描述：32比特；2018-06-24
-typedef struct {          
+typedef struct {
     tU4  kernel:3;     //0：内核态访问;
     tU4  system:3;     //1：系统管理员访问;
     tU4  security:3;   //2：安全管理员访问;
@@ -453,7 +453,7 @@ typedef struct {
 //-------------------------------------------------------------------------
 
 //内核基础数据结构K5_base；2018-09-02
-typedef struct {          
+typedef struct {
     tU4  k_version;    //内核版本标识;
     tU4  k_gen_time;   //内核生成时间;
     tU4  k_code_size;  //内核程序总字节数;
@@ -506,3 +506,4 @@ typedef struct {
 
 }  tK5_base;           //K5微内核操作系统基础数据结构。
 
+#endif
